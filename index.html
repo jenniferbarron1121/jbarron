@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BetterHelp Ratings Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f7fa;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text: #1a202c;
+      --muted: #718096;
+      --apple: #0071e3;
+      --google: #34a853;
+      --trustpilot: #00b67a;
+      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+      --radius: 14px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 32px 24px 64px;
+    }
+
+    header {
+      max-width: 960px;
+      margin: 0 auto 32px;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    #last-updated {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .cards {
+      max-width: 960px;
+      margin: 0 auto 32px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+
+    .card-logo.apple  { background: #e8f0fb; }
+    .card-logo.google { background: #e6f4ea; }
+    .card-logo.tp     { background: #e0f5ed; }
+
+    .card-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .card-rating {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .rating-number {
+      font-size: 3rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+
+    .rating-number.apple  { color: var(--apple); }
+    .rating-number.google { color: var(--google); }
+    .rating-number.tp     { color: var(--trustpilot); }
+
+    .rating-max {
+      font-size: 1rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .stars {
+      display: flex;
+      gap: 3px;
+    }
+
+    .star {
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+
+    .star.full  { color: #f59e0b; }
+    .star.half  { color: #f59e0b; opacity: 0.6; }
+    .star.empty { color: #cbd5e0; }
+
+    .review-count {
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .no-data {
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-style: italic;
+    }
+
+    .chart-container {
+      max-width: 960px;
+      margin: 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px 28px 24px;
+    }
+
+    .chart-container h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 20px;
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 280px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>BetterHelp Ratings Dashboard</h1>
+  <span id="last-updated">Loading…</span>
+</header>
+
+<div class="cards">
+  <div class="card" id="card-apple">
+    <div class="card-header">
+      <div class="card-logo apple">🍎</div>
+      <span class="card-title">Apple App Store</span>
+    </div>
+    <div class="card-rating">
+      <span class="rating-number apple" id="apple-rating">—</span>
+      <span class="rating-max">/ 5</span>
+    </div>
+    <div class="stars" id="apple-stars"></div>
+    <span class="review-count" id="apple-count"></span>
+  </div>
+
+  <div class="card" id="card-google">
+    <div class="card-header">
+      <div class="card-logo google">▶</div>
+      <span class="card-title">Google Play Store</span>
+    </div>
+    <div class="card-rating">
+      <span class="rating-number google" id="google-rating">—</span>
+      <span class="rating-max">/ 5</span>
+    </div>
+    <div class="stars" id="google-stars"></div>
+    <span class="review-count" id="google-count"></span>
+  </div>
+
+  <div class="card" id="card-tp">
+    <div class="card-header">
+      <div class="card-logo tp">★</div>
+      <span class="card-title">TrustPilot</span>
+    </div>
+    <div class="card-rating">
+      <span class="rating-number tp" id="tp-rating">—</span>
+      <span class="rating-max">/ 5</span>
+    </div>
+    <div class="stars" id="tp-stars"></div>
+    <span class="review-count" id="tp-count"></span>
+  </div>
+</div>
+
+<div class="chart-container">
+  <h2>Rating Trend</h2>
+  <div class="chart-wrap" id="chart-wrap">
+    <div class="empty-state" id="empty-state">No historical data yet. Run the fetch script to populate ratings.</div>
+    <canvas id="trend-chart" style="display:none;"></canvas>
+  </div>
+</div>
+
+<script>
+  function renderStars(containerId, rating) {
+    const el = document.getElementById(containerId);
+    if (!el || rating == null) return;
+    el.innerHTML = "";
+    for (let i = 1; i <= 5; i++) {
+      const span = document.createElement("span");
+      span.className = "star";
+      if (rating >= i) {
+        span.className += " full";
+        span.textContent = "★";
+      } else if (rating >= i - 0.5) {
+        span.className += " half";
+        span.textContent = "★";
+      } else {
+        span.className += " empty";
+        span.textContent = "★";
+      }
+      el.appendChild(span);
+    }
+  }
+
+  function fmtCount(n) {
+    if (n == null) return "";
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M reviews`;
+    if (n >= 1_000)     return `${(n / 1_000).toFixed(0)}K reviews`;
+    return `${n.toLocaleString()} reviews`;
+  }
+
+  function populateCard(prefix, data) {
+    const ratingEl = document.getElementById(`${prefix}-rating`);
+    const countEl  = document.getElementById(`${prefix}-count`);
+    if (!data) {
+      ratingEl.textContent = "—";
+      countEl.textContent = "No data";
+      return;
+    }
+    ratingEl.textContent = data.rating.toFixed(1);
+    renderStars(`${prefix}-stars`, data.rating);
+    countEl.textContent = fmtCount(data.count);
+  }
+
+  async function init() {
+    let json;
+    try {
+      const resp = await fetch("ratings.json?t=" + Date.now());
+      json = await resp.json();
+    } catch (e) {
+      document.getElementById("last-updated").textContent = "Error loading data";
+      return;
+    }
+
+    const history = json.history || [];
+
+    // Last updated
+    if (json.last_updated) {
+      const d = new Date(json.last_updated);
+      document.getElementById("last-updated").textContent =
+        "Updated " + d.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
+    } else {
+      document.getElementById("last-updated").textContent = "No data yet";
+    }
+
+    // Latest values for the cards
+    const latest = history.length ? history[history.length - 1] : null;
+    populateCard("apple",  latest?.apple  ?? null);
+    populateCard("google", latest?.google ?? null);
+    populateCard("tp",     latest?.trustpilot ?? null);
+
+    // Trend chart
+    if (history.length < 1) return;
+
+    document.getElementById("empty-state").style.display = "none";
+    const canvas = document.getElementById("trend-chart");
+    canvas.style.display = "block";
+
+    const labels     = history.map(e => e.date);
+    const appleData  = history.map(e => e.apple?.rating  ?? null);
+    const googleData = history.map(e => e.google?.rating ?? null);
+    const tpData     = history.map(e => e.trustpilot?.rating ?? null);
+
+    new Chart(canvas, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Apple App Store",
+            data: appleData,
+            borderColor: "#0071e3",
+            backgroundColor: "rgba(0,113,227,0.08)",
+            tension: 0.3,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            fill: true,
+            spanGaps: true,
+          },
+          {
+            label: "Google Play Store",
+            data: googleData,
+            borderColor: "#34a853",
+            backgroundColor: "rgba(52,168,83,0.08)",
+            tension: 0.3,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            fill: true,
+            spanGaps: true,
+          },
+          {
+            label: "TrustPilot",
+            data: tpData,
+            borderColor: "#00b67a",
+            backgroundColor: "rgba(0,182,122,0.08)",
+            tension: 0.3,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            fill: true,
+            spanGaps: true,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: {
+            position: "top",
+            labels: { usePointStyle: true, padding: 20, font: { size: 13 } },
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y?.toFixed(2) ?? "N/A"} ★`,
+            },
+          },
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { maxTicksLimit: 12, color: "#718096" },
+          },
+          y: {
+            min: 1,
+            max: 5,
+            ticks: {
+              stepSize: 0.5,
+              color: "#718096",
+              callback: v => v.toFixed(1),
+            },
+            grid: { color: "rgba(0,0,0,.06)" },
+          },
+        },
+      },
+    });
+  }
+
+  init();
+</script>
+</body>
+</html>
