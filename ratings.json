@@ -1,4 +1,16 @@
 {
-  "last_updated": null,
-  "history": []
+  "last_updated": "2026-05-12T23:28:26.249385+00:00",
+  "history": [
+    {
+      "date": "2026-05-12",
+      "apple": {
+        "rating": 4.81,
+        "count": 147176
+      },
+      "google": {
+        "rating": 4.6,
+        "count": 63568
+      }
+    }
+  ]
 }
